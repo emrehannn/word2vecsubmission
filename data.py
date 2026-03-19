@@ -1,6 +1,6 @@
 # data.py
 import numpy as np
-from hyperparams import CONTEXT_SIZE, BATCH_SIZE, EPOCHS
+from hyperparams import CONTEXT_SIZE, EPOCHS
 
 with open("text8", "r") as f:
     text = f.read()
