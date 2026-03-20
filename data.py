@@ -3,10 +3,12 @@ import numpy as np
 from hyperparams import CONTEXT_SIZE
 
 with open("text8", "r") as f:
-    text = f.read(1_000_000)
+    text = f.read(7000000) # read the first 7 million characters for faster training, the full text8 is 100 million characters
 
 
-vocabulary = sorted(set(text.split()))
+words = text.split()
+
+vocabulary = sorted(set(words))
 
 vocabularysize = len(vocabulary)
 # 253854
@@ -14,7 +16,7 @@ vocabularysize = len(vocabulary)
 word_to_idx = {word: i for i, word in enumerate(vocabulary)}
 idx_to_word = {i: word for i, word in enumerate(vocabulary)}
 
-text_idx = [word_to_idx[word] for word in text.split()]
+text_idx = [word_to_idx[word] for word in words]
 
 text_idx = np.array(text_idx)
  
@@ -29,8 +31,12 @@ def get_positive_samples():
         yield target, context
 
     
-
 ## negative sampling
+
+# a negative sample is a random word from the vocabulary that is not the target word.
+# we will use these negative samples to train our model to distinguish between true context words and random words.
+# for example, if the target word is "sat", and the context words are ["the", "cat", "on", "the"],
+# we might sample negative words like ["dog", "house", "tree"] that are not in the context of "sat".
 
 # no. of words occurences
 word_counts = np.bincount(text_idx)
@@ -46,15 +52,21 @@ noise_dist /= np.sum(noise_dist) # normalize to get probabilities. this is the d
 
 # negative training pairs
 def get_negative_samples(target, k):
-    negatives = [] # keep filling negatives until we have k negatives
+    candidates = np.random.choice(vocabularysize, size=k * 3, p=noise_dist)
+    candidates = candidates[candidates != target]
+    return candidates[:k]
+# I draw 3x more candidates than I need so I have room to filter out the target word, then take the first k
+# paper does this by picking random words in a loop one word at a time, but they use c. i prefer to batch it
 
-    while len(negatives) < k:
-        sample = np.random.choice(vocabularysize, p=noise_dist)
-        if sample != target: # ensure target is not in the negatives.
-            negatives.append(sample)
-    return np.array(negatives)
+# the paper, on skip-gram, draw k negative samples per context word. 
+# In skip-gram, each (target, context_word) pair is a separate training example. So for a window of 2,
+# you have 4 individual pairs per target position, and you draw k negatives for each one. Total negatives per position = 4 * k
 
-# a negative sample is a random word from the vocabulary that is not the target word.
-# we will use these negative samples to train our model to distinguish between true context words and random words.
-# for example, if the target word is "sat", and the context words are ["the", "cat", "on", "the"],
-# we might sample negative words like ["dog", "house", "tree"] that are not in the context of "sat".       
+
+# on the other hand, with cbow, we only draw k negative samples per target word,
+# regardless of the context size, so if k = 4, we would draw 4 negative samples per target word.
+
+
+# paper also discards some very frequent words, 
+# P(discard) = 1 - sqrt(t / f(w)) f(w) is the frequency of the word, and t is a chosen threshold, typically around 1e-5.
+# this is not implemented here.

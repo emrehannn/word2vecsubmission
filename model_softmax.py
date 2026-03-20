@@ -1,3 +1,7 @@
+
+# OUTDATED! this is the old implementation that uses softmax.
+# check model.py for negative sampling implementation. 
+
 import numpy as np
 from hyperparams import EMBEDDING_DIM, LEARNING_RATE
 from data import vocabularysize
