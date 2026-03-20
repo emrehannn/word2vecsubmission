@@ -97,9 +97,8 @@ king, dog:   0.270
 
 ## Notes
 1. Subsampling frequent words (P(discard) = 1 - sqrt(t / f(w))) is not implemented.
-2. The training is so slow because of pythons loop overhead. Word2vec got around this by implementing in C.
-3. Batching could improve performance 10x to 100x, but it requires a massive refactor.
-4. Should try Google's question words benchmark.
+2. Batching could improve performance 10x to 100x, but it requires a massive refactor.
+3. Should try Google's question words benchmark.
 
 ## Requirements
 
